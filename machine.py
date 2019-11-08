@@ -94,10 +94,12 @@ class BrainFuckMachine:
 
         if c not in '><+-.,[]':
             self.ip += 1
+            self.step()
             return
 
         if self.nf and c != ']':
             self.ip += 1
+            self.step()
             return
 
         {
