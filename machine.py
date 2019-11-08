@@ -1,8 +1,6 @@
-from typing import List
+from typing import List, Union
 import sys
 from collections import deque
-from itertools import zip_longest
-import os
 
 
 class BrainFuckMachine:
@@ -89,82 +87,48 @@ class BrainFuckMachine:
         if self.array[self.pointer]:
             self.ip = ip - 1
 
-    def step(self):
+    def step(self) -> Union[bool, None]:
+        if self.ip >= len(self.code):
+            return True
+
         c = self.code[self.ip]
 
-        if c not in '><+-.,[]':
-            self.ip += 1
-            self.step()
-            return
+        try:
+            {
+                '>': self.p_inc,
+                '<': self.p_dec,
+                '+': self.inc,
+                '-': self.dec,
+                '.': self.put,
+                ',': self.read,
+                '[': self.jz_e,
+                ']': self.jz_s,
+            }[c]()
 
-        if self.nf and c != ']':
-            self.ip += 1
-            self.step()
-            return
-
-        {
-            '>': self.p_inc,
-            '<': self.p_dec,
-            '+': self.inc,
-            '-': self.dec,
-            '.': self.put,
-            ',': self.read,
-            '[': self.jz_e,
-            ']': self.jz_s,
-        }[c]()
+        except KeyError:
+            pass
 
         self.ip += 1
+        try:
+            while (self.nf and self.code[self.ip] != ']') or (self.code[self.ip] not in '><+-.,[]'):
+                self.ip += 1
+        except IndexError:
+            return True
 
     def run(self, code):
         self.code = code
         self.ip = 0
 
-        while True:
-            try:
-                self.step()
-            except IndexError:
-                break
-
-    # def put_state(self):
-    #     os.system('clear')
-    #
-    #     put_table = [
-    #                     *(('', ''),) * 2 * (self.ip // 30),
-    #                     ('array:', self.array),
-    #                     ('pointer:', self.pointer),
-    #                     ('stack:', self.stack),
-    #                     ('ip:', self.ip)
-    #                 ]
-    #
-    #     put_code = []
-    #     for i, v in enumerate([self.code[i:i + 30] for i in range(0, len(self.code), 30)]):
-    #         if i == self.ip // 30:
-    #             a = self.ip % 30
-    #             put_code.append(' ' * (a + a // 10) + 'v')
-    #
-    #         put_code.append(v[:10] + ' ' + v[10:20] + ' ' + v[20:30])
-    #         put_code.append('0123456789 0123456789 0123456789')
-    #
-    #     put = zip_longest(put_code, put_table, fillvalue='')
-    #
-    #     for i in put:
-    #         i0 = i[0] or ''
-    #         i1 = i[1] or ('', '')
-    #         print('{:32}'.format(i0), i1[0], i1[1])
-    #
-    #     print()
-    #     print('stdout:', self.stdout)
+        while not self.step():
+            pass
 
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         sys.stderr.write('usage: python machine.py [filename] [-d --debug]')
+        exit(1)
 
     filename = sys.argv[1]
-    # try:
-    #     deb = bool(sys.argv[2])
-    # except IndexError:
-    #     deb = False
 
     machine = BrainFuckMachine()
     machine.run(open(filename).read())
