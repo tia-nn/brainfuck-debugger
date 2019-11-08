@@ -13,24 +13,23 @@ class BrainFuckMachine:
     ip: int
     nf: bool
 
-    debug: bool
-
     stdin: str
     stdin_p: int
     stdout: str
 
-    def __init__(self, debug: bool = False):
+    do_print: bool
+
+    def __init__(self, do_print: bool = True):
         self.array = [0]
         self._pointer = 0
         self.code = ''
         self.stack = deque()
         self.ip = 0
         self.nf = False
-        self.debug = debug
-        self.debug_stdout = ''
         self.stdin = ''
         self.stdin_p = 0
         self._stdout = ''
+        self.do_print = do_print
 
     @property
     def pointer(self):
@@ -48,7 +47,8 @@ class BrainFuckMachine:
 
     @stdout.setter
     def stdout(self, n):
-        print(n[len(self.stdout):], end='')
+        if self.do_print:
+            print(n[len(self.stdout):], end='')
         self._stdout = n
 
     def p_inc(self):
@@ -100,10 +100,6 @@ class BrainFuckMachine:
             self.ip += 1
             return
 
-        if self.debug:
-            self.put_state()
-            input()
-
         {
             '>': self.p_inc,
             '<': self.p_dec,
@@ -127,39 +123,35 @@ class BrainFuckMachine:
             except IndexError:
                 break
 
-        if self.debug:
-            self.put_state()
-            input()
-
-    def put_state(self):
-        os.system('clear')
-
-        put_table = [
-                        *(('', ''),) * 2 * (self.ip // 30),
-                        ('array:', self.array),
-                        ('pointer:', self.pointer),
-                        ('stack:', self.stack),
-                        ('ip:', self.ip)
-                    ]
-
-        put_code = []
-        for i, v in enumerate([self.code[i:i + 30] for i in range(0, len(self.code), 30)]):
-            if i == self.ip // 30:
-                a = self.ip % 30
-                put_code.append(' ' * (a + a // 10) + 'v')
-
-            put_code.append(v[:10] + ' ' + v[10:20] + ' ' + v[20:30])
-            put_code.append('0123456789 0123456789 0123456789')
-
-        put = zip_longest(put_code, put_table, fillvalue='')
-
-        for i in put:
-            i0 = i[0] or ''
-            i1 = i[1] or ('', '')
-            print('{:32}'.format(i0), i1[0], i1[1])
-
-        print()
-        print('stdout:', self.stdout)
+    # def put_state(self):
+    #     os.system('clear')
+    #
+    #     put_table = [
+    #                     *(('', ''),) * 2 * (self.ip // 30),
+    #                     ('array:', self.array),
+    #                     ('pointer:', self.pointer),
+    #                     ('stack:', self.stack),
+    #                     ('ip:', self.ip)
+    #                 ]
+    #
+    #     put_code = []
+    #     for i, v in enumerate([self.code[i:i + 30] for i in range(0, len(self.code), 30)]):
+    #         if i == self.ip // 30:
+    #             a = self.ip % 30
+    #             put_code.append(' ' * (a + a // 10) + 'v')
+    #
+    #         put_code.append(v[:10] + ' ' + v[10:20] + ' ' + v[20:30])
+    #         put_code.append('0123456789 0123456789 0123456789')
+    #
+    #     put = zip_longest(put_code, put_table, fillvalue='')
+    #
+    #     for i in put:
+    #         i0 = i[0] or ''
+    #         i1 = i[1] or ('', '')
+    #         print('{:32}'.format(i0), i1[0], i1[1])
+    #
+    #     print()
+    #     print('stdout:', self.stdout)
 
 
 if __name__ == '__main__':
@@ -167,10 +159,10 @@ if __name__ == '__main__':
         sys.stderr.write('usage: python machine.py [filename] [-d --debug]')
 
     filename = sys.argv[1]
-    try:
-        deb = bool(sys.argv[2])
-    except IndexError:
-        deb = False
+    # try:
+    #     deb = bool(sys.argv[2])
+    # except IndexError:
+    #     deb = False
 
-    machine = BrainFuckMachine(deb)
+    machine = BrainFuckMachine()
     machine.run(open(filename).read())
