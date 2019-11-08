@@ -14,7 +14,10 @@ class BrainFuckMachine:
     nf: bool
 
     debug: bool
-    debug_stdout: str
+
+    stdin: str
+    stdin_p: int
+    stdout: str
 
     def __init__(self, debug: bool = False):
         self.array = [0]
@@ -25,6 +28,9 @@ class BrainFuckMachine:
         self.nf = False
         self.debug = debug
         self.debug_stdout = ''
+        self.stdin = ''
+        self.stdin_p = 0
+        self._stdout = ''
 
     @property
     def pointer(self):
@@ -35,6 +41,15 @@ class BrainFuckMachine:
         if p == len(self.array):
             self.array.append(0)
         self._pointer = p
+
+    @property
+    def stdout(self):
+        return self._stdout
+
+    @stdout.setter
+    def stdout(self, n):
+        print(n[len(self.stdout):], end='')
+        self._stdout = n
 
     def p_inc(self):
         self.pointer += 1
@@ -51,13 +66,17 @@ class BrainFuckMachine:
     def put(self):
         c = chr(self.array[self.pointer])
 
-        if self.debug:
-            self.debug_stdout += c
-        else:
-            print(c, end='')
+        self.stdout += c
 
     def read(self):
-        self.array[self.pointer] = ord(sys.stdin.read(2)[0])
+        if len(self.stdin) == self.stdin_p:
+            a = input()
+            if not a:
+                a = '\n'
+            self.stdin += a
+
+        self.array[self.pointer] = ord(self.stdin[self.stdin_p])
+        self.stdin_p += 1
 
     def jz_e(self):
         self.stack.append(self.ip)
@@ -140,12 +159,12 @@ class BrainFuckMachine:
             print('{:32}'.format(i0), i1[0], i1[1])
 
         print()
-        print('stdout:', self.debug_stdout)
+        print('stdout:', self.stdout)
 
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        sys.stderr.write('usage: python main.py [filename] [-d --debug]')
+        sys.stderr.write('usage: python machine.py [filename] [-d --debug]')
 
     filename = sys.argv[1]
     try:
@@ -155,8 +174,3 @@ if __name__ == '__main__':
 
     machine = BrainFuckMachine(deb)
     machine.run(open(filename).read())
-
-    # code = '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.+.+.>++++++++++.'
-    # code2 = '+++++++++[>++++++++>+++++++++++>+++>+<<<<-]>.>++.+++++++..+++.>+++++.<<+++++++++++++++.>.+++.------.--------.>+.>+.'
-    # code3 = '+-[+++]++++++++++[>++++++++++<-]>.'
-    # machine.run(code3)
